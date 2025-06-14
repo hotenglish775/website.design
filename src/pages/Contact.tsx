@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { createContactMessage } from '../lib/supabase';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const Contact: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -21,10 +23,17 @@ const Contact: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Save to Supabase database
+      await createContactMessage({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
+
+      console.log('Contact message saved successfully:', formData);
       setIsSubmitted(true);
       setFormData({ name: '', email: '', message: '' });
       
@@ -32,7 +41,12 @@ const Contact: React.FC = () => {
       setTimeout(() => {
         setIsSubmitted(false);
       }, 5000);
-    }, 1000);
+    } catch (error) {
+      console.error('Error saving contact message:', error);
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -133,6 +147,13 @@ const Contact: React.FC = () => {
                 <div className="bg-green-900/50 border border-green-500 rounded-lg p-4 mb-6 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
                   <span className="text-green-300">Thank you! Your message has been sent successfully.</span>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6 flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+                  <span className="text-red-300">{error}</span>
                 </div>
               )}
 

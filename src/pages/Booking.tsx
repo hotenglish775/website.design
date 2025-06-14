@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle, Download } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle, Download, AlertCircle } from 'lucide-react';
+import { createBooking } from '../lib/supabase';
 
 const Booking: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Booking: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const projectTypes = [
     'Custom EVM Blockchain',
@@ -37,19 +39,20 @@ const Booking: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    // Here you would normally send the data to your backend/database
-    // For now, we'll simulate the submission
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real app, you would:
-      // 1. Send data to your database
-      // 2. Generate a booking confirmation
-      // 3. Send confirmation emails
-      
-      console.log('Booking data:', formData);
+      // Save to Supabase database
+      const booking = await createBooking({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        project_type: formData.projectType,
+        preferred_start_date: formData.startDate,
+        notes: formData.notes || '',
+      });
+
+      console.log('Booking saved successfully:', booking);
       setIsSubmitted(true);
       setFormData({
         name: '',
@@ -61,6 +64,7 @@ const Booking: React.FC = () => {
       });
     } catch (error) {
       console.error('Booking submission error:', error);
+      setError('Failed to submit booking. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,6 +156,13 @@ VALUES (
       <section className="py-20 bg-gray-800/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 md:p-12 animate-slide-up">
+            {error && (
+              <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6 flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+                <span className="text-red-300">{error}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Personal Information */}
               <div>
